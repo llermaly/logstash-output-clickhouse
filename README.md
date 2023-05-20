@@ -1,8 +1,6 @@
-# I switched to vector -> https://github.com/timberio/vector.
-
 # Logstash Plugin
 
-This plugin is a modified version of the Lucidworks logstash json_batch. That plugin is available [here](https://github.com/lucidworks/logstash-output-json_batch). 
+This plugin is a fork of a [deprecated modified version](https://github.com/funcmike/logstash-output-clickhouse) of the Lucidworks logstash json_batch. That plugin is available [here](https://github.com/lucidworks/logstash-output-json_batch). 
 
 It has been modified to support ClickHouse JSON Format, but also supports fault tolerance.
 
@@ -10,17 +8,33 @@ It has been modified to support ClickHouse JSON Format, but also supports fault 
 
 Please note that the name of the plugin when used is `clickhouse`, it only supports json in its current form. If further output formats are added in the future, this might change back to json_batch.
 
-    output {
-      clickhouse {
-        headers => ["Authorization", "Basic YWRtaW46cGFzc3dvcmQxMjM="]
-        http_hosts => ["http://your.clickhouse1/", "http://your.clickhouse2/", "http://your.clickhouse3/"]
-        table => "table_name"
-        mutations => {
-          "to1" => "from1"
-          "to2" => [ "from2", "(.)(.)", '\1\2' ]
-        }
-      }
+```
+input {
+    generator {
+        lines => [
+        '{"id": "123e4567-e89b-12d3-a456-426614174000", "name": "John Doe", "email": "john@doe.com", "created_at": "2023-05-19T10:30:00"}'
+        ]
+        count => 1
     }
+}
+
+filter {
+    json {
+        source => "message"
+    }
+}
+
+output {
+    clickhouse {
+        headers => ["Authorization", "Basic ZGVmYXVsdDpwYXNzd29yZA=="]
+        http_hosts => ["http://127.0.0.1:8123"]
+        table => "user_table"
+    }
+    stdout {
+        codec => rubydebug
+    }
+}
+```
 
 ## Other custom options
 * `save_on_failure` (default: true) - enable / disable request body save on failure
@@ -42,4 +56,4 @@ To build the gem yourself, use `gem build logstash-output-clickhouse.gemspec` in
 
 To install, run the following command, assuming the gem is in the local directory: `$LOGSTASH_HOME/bin/plugin install logstash-output-clickhouse-X.Y.Z.gem`
 
-P.S. Tested on Logstash 7.1.1
+P.S. Tested on Logstash 8.7.1
